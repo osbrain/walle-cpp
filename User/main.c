@@ -1,11 +1,11 @@
 /********************************************************************************
-  * æ–‡ ä»¶ å: main.c
-  * ç‰ˆ æœ¬ å·: åˆç‰ˆ
-  * ä¿®æ”¹ä½œè€…: å°‘ä¸å…¥å·
-  * ä¿®æ”¹æ—¥æœŸ: 2023å¹´02æœˆ28æ—¥
-  * åŠŸèƒ½ä»‹ç»: ç»¼åˆ      
+  * ÎÄ ¼ş Ãû: main.c
+  * °æ ±¾ ºÅ: ³õ°æ
+  * ĞŞ¸Ä×÷Õß: ÉÙ²»Èë´¨
+  * ĞŞ¸ÄÈÕÆÚ: 2023Äê02ÔÂ28ÈÕ
+  * ¹¦ÄÜ½éÉÜ: ×ÛºÏ      
   ******************************************************************************
-  * æ³¨æ„äº‹é¡¹:
+  * ×¢ÒâÊÂÏî:
 *********************************************************************************/
 
 #include "gd32f4xx.h"
@@ -29,44 +29,149 @@
 #include "bmp.h"
 #include "bsp_pca9685.h"
 #include "bsp_ps2.h"
-
 /***********************************************
-å‡½æ•°åç§° ï¼š main
-åŠŸ    èƒ½ ï¼š ä¸»å‡½æ•°
-å‚    æ•° ï¼š æ— 
-è¿” å› å€¼ ï¼š æ— 
-ä½œ    è€… ï¼š å°‘ä¸å…¥å·
+º¯ÊıÃû³Æ £º main
+¹¦    ÄÜ £º Ö÷º¯Êı
+²Î    Êı £º ÎŞ
+·µ »Ø Öµ £º ÎŞ
+×÷    Õß £º ÉÙ²»Èë´¨
 *************************************************/
-//ä¸‹è½½è°ƒè¯•
-extern uint8_t g_recv_buff[USART_RECEIVE_LENGTH];           // æ¥æ”¶ç¼“å†²åŒº
-extern uint16_t g_recv_length;                              // æ¥æ”¶æ•°æ®é•¿åº¦
-extern uint8_t g_recv_complete_flag;                        // æ¥æ”¶æ•°æ®å®Œæˆæ ‡å¿—ä½
+//ÏÂÔØµ÷ÊÔ
+extern uint8_t g_recv_buff[USART_RECEIVE_LENGTH];           // ½ÓÊÕ»º³åÇø
+extern uint16_t g_recv_length;                              // ½ÓÊÕÊı¾İ³¤¶È
+extern uint8_t g_recv_complete_flag;                        // ½ÓÊÕÊı¾İÍê³É±êÖ¾Î»
 
 //VC-02
-extern uint8_t g_recv_buff_usart2[USART_RECEIVE_LENGTH];    // æ¥æ”¶ç¼“å†²åŒº
-extern uint16_t g_recv_length_usart2;                       // æ¥æ”¶æ•°æ®é•¿åº¦
-extern uint8_t g_recv_complete_flag_usart2;                 // æ¥æ”¶æ•°æ®å®Œæˆæ ‡å¿—ä½
+extern uint8_t g_recv_buff_usart2[USART_RECEIVE_LENGTH];    // ½ÓÊÕ»º³åÇø
+extern uint16_t g_recv_length_usart2;                       // ½ÓÊÕÊı¾İ³¤¶È
+extern uint8_t g_recv_complete_flag_usart2;                 // ½ÓÊÕÊı¾İÍê³É±êÖ¾Î»
 
-//è“ç‰™è¿æ¥
-extern uint8_t g_recv_buff_uart6[USART_RECEIVE_LENGTH];     // æ¥æ”¶ç¼“å†²åŒº
-extern uint16_t g_recv_length_uart6;                        // æ¥æ”¶æ•°æ®é•¿åº¦
-extern uint8_t g_recv_complete_flag_uart6;                  // æ¥æ”¶æ•°æ®å®Œæˆæ ‡å¿—ä½
+//À¶ÑÀÁ¬½Ó
+extern uint8_t g_recv_buff_uart6[USART_RECEIVE_LENGTH];     // ½ÓÊÕ»º³åÇø
+extern uint16_t g_recv_length_uart6;                        // ½ÓÊÕÊı¾İ³¤¶È
+extern uint8_t g_recv_complete_flag_uart6;                  // ½ÓÊÕÊı¾İÍê³É±êÖ¾Î»
 
-uint16_t speed = 65;
+#define ROBOT_DEFAULT_SPEED       65U
+#define ROBOT_MEDIUM_SPEED        80U
+#define ROBOT_HIGH_SPEED          100U
+#define ROBOT_LOOP_DELAY_MS       50U
+#define ROBOT_STARTUP_DELAY_MS    1000U
+#define ROBOT_BUZZER_DELAY_MS     100U
 
-#define SERVO_STEP_ANGLE 3U
-#define SERVO_MAX_ANGLE 180U
+#define SERVO_STEP_ANGLE          3U
+#define SERVO_MAX_ANGLE           180U
+#define SERVO_MIN_ANGLE           0U
+#define SERVO_FORWARD_DIRECTION   1
+#define SERVO_REVERSE_DIRECTION  -1
 
-#define SERVO_LEFT_EYE_CH   0U
-#define SERVO_RIGHT_EYE_CH  1U
-#define SERVO_HEAD_CH       2U
-#define SERVO_LEFT_ARM_CH   3U
-#define SERVO_RIGHT_ARM_CH  4U
+#define SERVO_LEFT_EYE_CH         0U
+#define SERVO_RIGHT_EYE_CH        1U
+#define SERVO_HEAD_CH             2U
+#define SERVO_LEFT_ARM_CH         3U
+#define SERVO_RIGHT_ARM_CH        4U
+
+enum {
+    CMD_FORWARD = 1,
+    CMD_BACKWARD = 2,
+    CMD_RIGHT = 3,
+    CMD_LEFT = 4,
+    CMD_STOP_HEART = 5,
+    CMD_STOP_WALL_E = 6,
+    CMD_BUZZER_TOGGLE = 7,
+    CMD_LEFT_EYE_TOGGLE = 8,
+    CMD_RIGHT_EYE_TOGGLE = 9,
+    CMD_BUZZER_OFF = 10,
+    CMD_LEFT_EYE_OFF = 11,
+    CMD_RIGHT_EYE_OFF = 12,
+    CMD_VOICE_SPEED_LOW = 13,
+    CMD_VOICE_SPEED_MEDIUM = 14,
+    CMD_VOICE_SPEED_HIGH = 15,
+    CMD_BT_SPEED_LOW = 21,
+    CMD_BT_SPEED_MEDIUM = 22,
+    CMD_BT_SPEED_HIGH = 23,
+    CMD_SERVO_LEFT_EYE = 24,
+    CMD_SERVO_RIGHT_EYE = 25,
+    CMD_SERVO_HEAD = 26,
+    CMD_SERVO_BOTH_ARMS = 27,
+    CMD_SERVO_LEFT_ARM = 28,
+    CMD_SERVO_RIGHT_ARM = 29
+};
 
 typedef struct {
     uint8_t angle;
     int8_t direction;
 } servo_state_t;
+
+typedef struct {
+    uint16_t speed;
+    servo_state_t left_eye;
+    servo_state_t right_eye;
+    servo_state_t head;
+    servo_state_t left_arm;
+    servo_state_t right_arm;
+    servo_state_t arm_pair;
+} robot_state_t;
+
+static void init_servo_state(servo_state_t *state)
+{
+    if (state == NULL) {
+        return;
+    }
+
+    state->angle = SERVO_MIN_ANGLE;
+    state->direction = SERVO_FORWARD_DIRECTION;
+}
+
+static void init_robot_state(robot_state_t *state)
+{
+    if (state == NULL) {
+        return;
+    }
+
+    state->speed = ROBOT_DEFAULT_SPEED;
+    init_servo_state(&state->left_eye);
+    init_servo_state(&state->right_eye);
+    init_servo_state(&state->head);
+    init_servo_state(&state->left_arm);
+    init_servo_state(&state->right_arm);
+    init_servo_state(&state->arm_pair);
+}
+
+static void lcd_show_robot_picture(uint16_t x, uint16_t y, uint16_t width, uint16_t height, const unsigned char *picture)
+{
+    LCD_Clear(WHITE);
+    LCD_ShowPicture(x, y, width, height, picture);
+}
+
+static void show_default_picture(void)
+{
+    lcd_show_robot_picture(0, 0, 240, 240, WALL_E);
+}
+
+static void show_forward_picture(void)
+{
+    lcd_show_robot_picture(53, 0, 186, 240, shang);
+}
+
+static void show_backward_picture(void)
+{
+    lcd_show_robot_picture(53, 0, 187, 240, xia);
+}
+
+static void show_right_picture(void)
+{
+    lcd_show_robot_picture(0, 53, 240, 187, you);
+}
+
+static void show_left_picture(void)
+{
+    lcd_show_robot_picture(0, 53, 240, 187, zuo);
+}
+
+static void show_heart_picture(void)
+{
+    lcd_show_robot_picture(0, 0, 240, 240, heart);
+}
 
 static uint8_t parse_uart_command(const uint8_t *buf, uint16_t len, uint8_t *cmd)
 {
@@ -127,254 +232,303 @@ static uint8_t servo_next_angle(servo_state_t *state)
 
     if (next_angle >= SERVO_MAX_ANGLE) {
         next_angle = SERVO_MAX_ANGLE;
-        state->direction = -1;
-    } else if (next_angle <= 0) {
-        next_angle = 0;
-        state->direction = 1;
+        state->direction = SERVO_REVERSE_DIRECTION;
+    } else if (next_angle <= SERVO_MIN_ANGLE) {
+        next_angle = SERVO_MIN_ANGLE;
+        state->direction = SERVO_FORWARD_DIRECTION;
     }
 
     state->angle = (uint8_t)next_angle;
     return state->angle;
 }
 
+static void handle_drive_command(uint8_t cmd, uint16_t speed)
+{
+    switch (cmd) {
+        case CMD_FORWARD:
+            motor_forward(speed);
+            show_forward_picture();
+            break;
+        case CMD_BACKWARD:
+            motor_backward(speed);
+            show_backward_picture();
+            break;
+        case CMD_RIGHT:
+            motor_rightward(speed);
+            show_right_picture();
+            break;
+        case CMD_LEFT:
+            motor_leftward(speed);
+            show_left_picture();
+            break;
+        case CMD_STOP_HEART:
+            motor_stop(0);
+            show_heart_picture();
+            break;
+        case CMD_STOP_WALL_E:
+            motor_stop(1);
+            show_default_picture();
+            break;
+        default:
+            break;
+    }
+}
+
+static void handle_servo_command(uint8_t cmd, robot_state_t *state)
+{
+    uint8_t servo_angle = 0;
+
+    if (state == NULL) {
+        return;
+    }
+
+    switch (cmd) {
+        case CMD_SERVO_LEFT_EYE:
+            servo_angle = servo_next_angle(&state->left_eye);
+            setAngle(SERVO_LEFT_EYE_CH, servo_angle);
+            break;
+        case CMD_SERVO_RIGHT_EYE:
+            servo_angle = servo_next_angle(&state->right_eye);
+            setAngle(SERVO_RIGHT_EYE_CH, servo_angle);
+            break;
+        case CMD_SERVO_HEAD:
+            servo_angle = servo_next_angle(&state->head);
+            setAngle(SERVO_HEAD_CH, servo_angle);
+            break;
+        case CMD_SERVO_BOTH_ARMS:
+            servo_angle = servo_next_angle(&state->arm_pair);
+            state->left_arm.angle = servo_angle;
+            state->left_arm.direction = state->arm_pair.direction;
+            state->right_arm.angle = servo_angle;
+            state->right_arm.direction = state->arm_pair.direction;
+            setAngle2(SERVO_LEFT_ARM_CH, SERVO_RIGHT_ARM_CH, servo_angle);
+            break;
+        case CMD_SERVO_LEFT_ARM:
+            servo_angle = servo_next_angle(&state->left_arm);
+            state->arm_pair.angle = state->left_arm.angle;
+            state->arm_pair.direction = state->left_arm.direction;
+            setAngle(SERVO_LEFT_ARM_CH, servo_angle);
+            break;
+        case CMD_SERVO_RIGHT_ARM:
+            servo_angle = servo_next_angle(&state->right_arm);
+            state->arm_pair.angle = state->right_arm.angle;
+            state->arm_pair.direction = state->right_arm.direction;
+            setAngle(SERVO_RIGHT_ARM_CH, servo_angle);
+            break;
+        default:
+            break;
+    }
+}
+
+static void handle_uart6_command(uint8_t cmd, robot_state_t *state)
+{
+    if (state == NULL) {
+        return;
+    }
+
+    switch (cmd) {
+        case CMD_FORWARD:
+        case CMD_BACKWARD:
+        case CMD_RIGHT:
+        case CMD_LEFT:
+        case CMD_STOP_HEART:
+        case CMD_STOP_WALL_E:
+            handle_drive_command(cmd, state->speed);
+            break;
+        case CMD_BUZZER_TOGGLE:
+            switch_buzzer_status();
+            break;
+        case CMD_LEFT_EYE_TOGGLE:
+            switch_eye_left_status();
+            break;
+        case CMD_RIGHT_EYE_TOGGLE:
+            switch_eye_right_status();
+            break;
+        case CMD_BUZZER_OFF:
+            BUZZER_OFF;
+            break;
+        case CMD_LEFT_EYE_OFF:
+            EYE_L_OFF;
+            break;
+        case CMD_RIGHT_EYE_OFF:
+            EYE_R_OFF;
+            break;
+        case CMD_BT_SPEED_LOW:
+            state->speed = ROBOT_DEFAULT_SPEED;
+            break;
+        case CMD_BT_SPEED_MEDIUM:
+            state->speed = ROBOT_MEDIUM_SPEED;
+            break;
+        case CMD_BT_SPEED_HIGH:
+            state->speed = ROBOT_HIGH_SPEED;
+            break;
+        case CMD_SERVO_LEFT_EYE:
+        case CMD_SERVO_RIGHT_EYE:
+        case CMD_SERVO_HEAD:
+        case CMD_SERVO_BOTH_ARMS:
+        case CMD_SERVO_LEFT_ARM:
+        case CMD_SERVO_RIGHT_ARM:
+            handle_servo_command(cmd, state);
+            break;
+        default:
+            break;
+    }
+}
+
+static void handle_usart2_command(uint8_t cmd, robot_state_t *state)
+{
+    if (state == NULL) {
+        return;
+    }
+
+    switch (cmd) {
+        case CMD_FORWARD:
+        case CMD_BACKWARD:
+        case CMD_RIGHT:
+        case CMD_LEFT:
+        case CMD_STOP_HEART:
+        case CMD_STOP_WALL_E:
+            handle_drive_command(cmd, state->speed);
+            break;
+        case CMD_BUZZER_TOGGLE:
+            BUZZER_ON;
+            break;
+        case CMD_LEFT_EYE_TOGGLE:
+            EYE_L_ON;
+            break;
+        case CMD_RIGHT_EYE_TOGGLE:
+            EYE_R_ON;
+            break;
+        case CMD_BUZZER_OFF:
+            BUZZER_OFF;
+            break;
+        case CMD_LEFT_EYE_OFF:
+            EYE_L_OFF;
+            break;
+        case CMD_RIGHT_EYE_OFF:
+            EYE_R_OFF;
+            break;
+        case CMD_VOICE_SPEED_LOW:
+            state->speed = ROBOT_DEFAULT_SPEED;
+            break;
+        case CMD_VOICE_SPEED_MEDIUM:
+            state->speed = ROBOT_MEDIUM_SPEED;
+            break;
+        case CMD_VOICE_SPEED_HIGH:
+            state->speed = ROBOT_HIGH_SPEED;
+            break;
+        default:
+            break;
+    }
+}
+
+static void clear_received_data(uint8_t *buf, uint16_t *len)
+{
+    if ((buf == NULL) || (len == NULL)) {
+        return;
+    }
+
+    memset(buf, 0, *len);
+    *len = 0;
+}
+
+static void process_uart6_data(robot_state_t *state)
+{
+    uint8_t uart6_cmd = 0;
+
+    if (!g_recv_complete_flag_uart6) {
+        return;
+    }
+
+    g_recv_complete_flag_uart6 = 0;
+    printf("g_recv_length:%d ", g_recv_length_uart6);
+    printf("g_recv_buff:%s\r\n", g_recv_buff_uart6);
+
+    if (parse_uart_command(g_recv_buff_uart6, g_recv_length_uart6, &uart6_cmd)) {
+        handle_uart6_command(uart6_cmd, state);
+    }
+
+    clear_received_data(g_recv_buff_uart6, &g_recv_length_uart6);
+}
+
+static void process_usart2_data(robot_state_t *state)
+{
+    if (!g_recv_complete_flag_usart2) {
+        return;
+    }
+
+    g_recv_complete_flag_usart2 = 0;
+    printf("g_recv_length:%d ", g_recv_length_usart2);
+    printf("g_recv_buff:%s\r\n", g_recv_buff_usart2);
+
+    handle_usart2_command(g_recv_buff_usart2[0], state);
+    clear_received_data(g_recv_buff_usart2, &g_recv_length_usart2);
+}
+
+static void report_ps2_status(void)
+{
+    if (PS2_RedLight() == 0) { // Èç¹ûµ±Ç°ÊÇºìµÆÄ£Ê½
+        printf(" %5d %5d %5d %5d\r\n",
+               PS2_AnologData(PSS_LX),
+               PS2_AnologData(PSS_LY),
+               PS2_AnologData(PSS_RX),
+               PS2_AnologData(PSS_RY));
+    }
+}
+
+static void init_board(void)
+{
+    nvic_priority_group_set(NVIC_PRIGROUP_PRE2_SUB2);
+    systick_config();                         // µÎ´ğ¶¨Ê±Æ÷³õÊ¼»¯
+
+    usart_gpio_config(9600U);                 // ÏÂÔØÆ÷´®¿Ú³õÊ¼»¯
+    usart2_gpio_config(115200U);              // ÓïÒô´®¿Ú³õÊ¼»¯
+    uart6_gpio_config(9600U);                 // À¶ÑÀ´®¿Ú³õÊ¼»¯
+    pwm1_config(200, 100);                    // PWM1³õÊ¼»¯
+    led_gpio_config();                        // LED³õÊ¼»¯
+    lcd_gpio_config();                        // LCD³õÊ¼»¯
+    buzzer_gpio_config();                     // ·äÃùÆ÷³õÊ¼»¯
+    eye_gpio_config();                        // ÑÛµÆ³õÊ¼»¯
+    motor_gpio_config();                      // µç»ú³õÊ¼»¯
+    motor_stop(1);                            // ÉÏµçÄ¬ÈÏÍ£Ö¹
+    PCA9685_Init(50, SERVO_MIN_ANGLE);        // PCA9685--16Â·¶æ»ú³õÊ¼»¯  ÆµÂÊ50Hz -- 0¶È
+
+    PS2_SetInit();                            // PS2ÊÖ±ú³õÊ¼»¯
+    printf("start\r\n");
+    delay_1ms(ROBOT_STARTUP_DELAY_MS);
+
+    LCD_Clear(WHITE);
+    BACK_COLOR = WHITE;                       // LCD±³¾°
+    BUZZER_ON;
+    delay_1ms(ROBOT_BUZZER_DELAY_MS);
+    BUZZER_OFF;                               // ÏÂÔØÌáÊ¾
+    show_default_picture();                   // Ä¬ÈÏÏÔÊ¾
+
+    delay_1ms(ROBOT_STARTUP_DELAY_MS);
+}
+
 /************************************************
-å‡½æ•°åç§° ï¼š main
-åŠŸ    èƒ½ ï¼š ä¸»å‡½æ•°
-å‚    æ•° ï¼š æ— 
-è¿” å› å€¼ ï¼š æ— 
+º¯ÊıÃû³Æ £º main
+¹¦    ÄÜ £º Ö÷º¯Êı
+²Î    Êı £º ÎŞ
+·µ »Ø Öµ £º ÎŞ
 *************************************************/
 int main(void)
 {
-    uint8_t uart6_cmd = 0;
-    uint8_t servo_angle = 0;
-    servo_state_t left_eye_servo = {0, 1};
-    servo_state_t right_eye_servo = {0, 1};
-    servo_state_t head_servo = {0, 1};
-    servo_state_t left_arm_servo = {0, 1};
-    servo_state_t right_arm_servo = {0, 1};
-    servo_state_t arm_pair_servo = {0, 1};
+    robot_state_t robot_state;
 
-    nvic_priority_group_set(NVIC_PRIGROUP_PRE2_SUB2);
-    systick_config();                        // æ»´ç­”å®šæ—¶å™¨åˆå§‹åŒ–
-
-    usart_gpio_config(9600U);                // ä¸‹è½½å™¨ä¸²å£åˆå§‹åŒ–
-    usart2_gpio_config(115200U);             // è¯­éŸ³ä¸²å£åˆå§‹åŒ–
-    uart6_gpio_config(9600U);                // è“ç‰™ä¸²å£åˆå§‹åŒ–
-    pwm1_config(200, 100);                   // PWM1åˆå§‹åŒ–
-    led_gpio_config();                       // LEDåˆå§‹åŒ–
-    lcd_gpio_config();                       // LCDåˆå§‹åŒ–
-    buzzer_gpio_config();                    // èœ‚é¸£å™¨åˆå§‹åŒ–
-    eye_gpio_config();                       // çœ¼ç¯åˆå§‹åŒ–
-    motor_gpio_config();                     // ç”µæœºåˆå§‹åŒ–
-    PCA9685_Init(50, 0);                     // PCA9685--16è·¯èˆµæœºåˆå§‹åŒ–  é¢‘ç‡50Hz -- 0åº¦
-
-    // PS2æ‰‹æŸ„åˆå§‹åŒ–
-    PS2_SetInit();
-    printf("start\r\n");
-    delay_1ms(1000);
-
-    LCD_Clear(WHITE);
-    BACK_COLOR = WHITE;                      // LCDèƒŒæ™¯
-    BUZZER_ON;
-    delay_1ms(100);
-    BUZZER_OFF;                              // ä¸‹è½½æç¤º
-    LCD_ShowPicture(0, 0, 240, 240, WALL_E); // é»˜è®¤æ˜¾ç¤º
-
-    delay_1ms(1000);
+    init_robot_state(&robot_state);
+    init_board();
 
 #if 0
     printf("-------This is bluetooth AT test-------\r\n");
-    HC05_Bluetooth2_0_config(); // ç›´æ¥ä½¿ç”¨ä¸²å£è°ƒè¯•åŠ©æ‰‹å‘é€ATæŒ‡ä»¤ä¹Ÿè¡Œï¼Œéœ€è¦å€ŸåŠ©USBè½¬TTLæ¨¡å—
+    HC05_Bluetooth2_0_config(); // Ö±½ÓÊ¹ÓÃ´®¿Úµ÷ÊÔÖúÊÖ·¢ËÍATÖ¸ÁîÒ²ĞĞ£¬ĞèÒª½èÖúUSB×ªTTLÄ£¿é
 #endif
 
     while (1) {
-        if (PS2_RedLight() == 0) { // å¦‚æœå½“å‰æ˜¯çº¢ç¯æ¨¡å¼
-            // è¾“å‡ºå·¦å³ä¸¤ä¸ªé¥æ„Ÿçš„XYå€¼
-            printf(" %5d %5d %5d %5d\r\n",
-                   PS2_AnologData(PSS_LX),
-                   PS2_AnologData(PSS_LY),
-                   PS2_AnologData(PSS_RX),
-                   PS2_AnologData(PSS_RY));
-        }
-
-        delay_1ms(50); // é˜²æ­¢å‘é€å¤ªå¿«ï¼Œæ¥æ”¶å™¨ååº”ä¸è¿‡æ¥
-
-        /* è“ç‰™ï¼Œç­‰å¾…æ•°æ®ä¼ è¾“å®Œæˆ */
-        if (g_recv_complete_flag_uart6) {               // æ•°æ®æ¥æ”¶å®Œæˆ
-            g_recv_complete_flag_uart6 = 0;             // ç­‰å¾…ä¸‹æ¬¡æ¥æ”¶
-            printf("g_recv_length:%d ", g_recv_length_uart6); // æ‰“å°æ¥æ”¶çš„æ•°æ®é•¿åº¦
-            printf("g_recv_buff:%s\r\n", g_recv_buff_uart6); // æ‰“å°æ¥æ”¶çš„æ•°æ®
-
-            if (parse_uart_command(g_recv_buff_uart6, g_recv_length_uart6, &uart6_cmd)) {
-                switch (uart6_cmd) {
-                    case 1:
-                        motor_forward(speed);
-                        LCD_Clear(WHITE);
-                        LCD_ShowPicture(53, 0, 186, 240, shang);
-                        break;
-                    case 2:
-                        motor_backward(speed);
-                        LCD_Clear(WHITE);
-                        LCD_ShowPicture(53, 0, 187, 240, xia);
-                        break;
-                    case 3:
-                        motor_rightward(speed);
-                        LCD_Clear(WHITE);
-                        LCD_ShowPicture(0, 53, 240, 187, you);
-                        break;
-                    case 4:
-                        motor_leftward(speed);
-                        LCD_Clear(WHITE);
-                        LCD_ShowPicture(0, 53, 240, 187, zuo);
-                        break;
-                    case 5:
-                        motor_stop(0);
-                        LCD_Clear(WHITE);
-                        LCD_ShowPicture(0, 0, 240, 240, heart);
-                        break;
-                    case 6:
-                        motor_stop(1);
-                        LCD_Clear(WHITE);
-                        LCD_ShowPicture(0, 0, 240, 240, WALL_E);
-                        break;
-                    case 7:
-                        switch_buzzer_status();
-                        break;
-                    case 8:
-                        switch_eye_left_status();
-                        break;
-                    case 9:
-                        switch_eye_right_status();
-                        break;
-                    case 10:
-                        BUZZER_OFF;
-                        break;
-                    case 11:
-                        EYE_L_OFF;
-                        break;
-                    case 12:
-                        EYE_R_OFF;
-                        break;
-                    case 21:
-                        speed = 65;
-                        break;
-                    case 22:
-                        speed = 80;
-                        break;
-                    case 23:
-                        speed = 100;
-                        break;
-                    case 24:
-                        servo_angle = servo_next_angle(&left_eye_servo);
-                        setAngle(SERVO_LEFT_EYE_CH, servo_angle);
-                        break;
-                    case 25:
-                        servo_angle = servo_next_angle(&right_eye_servo);
-                        setAngle(SERVO_RIGHT_EYE_CH, servo_angle);
-                        break;
-                    case 26:
-                        servo_angle = servo_next_angle(&head_servo);
-                        setAngle(SERVO_HEAD_CH, servo_angle);
-                        break;
-                    case 27:
-                        servo_angle = servo_next_angle(&arm_pair_servo);
-                        left_arm_servo.angle = servo_angle;
-                        left_arm_servo.direction = arm_pair_servo.direction;
-                        right_arm_servo.angle = servo_angle;
-                        right_arm_servo.direction = arm_pair_servo.direction;
-                        setAngle2(SERVO_LEFT_ARM_CH, SERVO_RIGHT_ARM_CH, servo_angle);
-                        break;
-                    case 28:
-                        servo_angle = servo_next_angle(&left_arm_servo);
-                        arm_pair_servo.angle = left_arm_servo.angle;
-                        arm_pair_servo.direction = left_arm_servo.direction;
-                        setAngle(SERVO_LEFT_ARM_CH, servo_angle);
-                        break;
-                    case 29:
-                        servo_angle = servo_next_angle(&right_arm_servo);
-                        arm_pair_servo.angle = right_arm_servo.angle;
-                        arm_pair_servo.direction = right_arm_servo.direction;
-                        setAngle(SERVO_RIGHT_ARM_CH, servo_angle);
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            memset(g_recv_buff_uart6, 0, g_recv_length_uart6); // æ¸…ç©ºæ•°ç»„
-            g_recv_length_uart6 = 0;                           // æ¸…ç©ºé•¿åº¦
-        }
-
-        /* VC-02ï¼Œç­‰å¾…æ•°æ®ä¼ è¾“å®Œæˆ */
-        if (g_recv_complete_flag_usart2) {              // æ•°æ®æ¥æ”¶å®Œæˆ
-            g_recv_complete_flag_usart2 = 0;            // ç­‰å¾…ä¸‹æ¬¡æ¥æ”¶
-            printf("g_recv_length:%d ", g_recv_length_usart2); // æ‰“å°æ¥æ”¶çš„æ•°æ®é•¿åº¦
-            printf("g_recv_buff:%s\r\n", g_recv_buff_usart2); // æ‰“å°æ¥æ”¶çš„æ•°æ®
-
-            switch (g_recv_buff_usart2[0]) {
-                case 1:
-                    motor_forward(speed);
-                    LCD_Clear(WHITE);
-                    LCD_ShowPicture(53, 0, 186, 240, shang);
-                    break;
-                case 2:
-                    motor_backward(speed);
-                    LCD_Clear(WHITE);
-                    LCD_ShowPicture(53, 0, 187, 240, xia);
-                    break;
-                case 3:
-                    motor_rightward(speed);
-                    LCD_Clear(WHITE);
-                    LCD_ShowPicture(0, 53, 240, 187, you);
-                    break;
-                case 4:
-                    motor_leftward(speed);
-                    LCD_Clear(WHITE);
-                    LCD_ShowPicture(0, 53, 240, 187, zuo);
-                    break;
-                case 5:
-                    motor_stop(0);
-                    LCD_Clear(WHITE);
-                    LCD_ShowPicture(0, 0, 240, 240, heart);
-                    break;
-                case 6:
-                    motor_stop(1);
-                    LCD_Clear(WHITE);
-                    LCD_ShowPicture(0, 0, 240, 240, WALL_E);
-                    break;
-                case 7:
-                    BUZZER_ON;
-                    break;
-                case 8:
-                    EYE_L_ON;
-                    break;
-                case 9:
-                    EYE_R_ON;
-                    break;
-                case 10:
-                    BUZZER_OFF;
-                    break;
-                case 11:
-                    EYE_L_OFF;
-                    break;
-                case 12:
-                    EYE_R_OFF;
-                    break;
-                case 13:
-                    speed = 65;
-                    break;
-                case 14:
-                    speed = 80;
-                    break;
-                case 15:
-                    speed = 100;
-                    break;
-                default:
-                    break;
-            }
-
-            memset(g_recv_buff_usart2, 0, g_recv_length_usart2); // æ¸…ç©ºæ•°ç»„
-            g_recv_length_usart2 = 0;                            // æ¸…ç©ºé•¿åº¦
-        }
+        report_ps2_status();
+        delay_1ms(ROBOT_LOOP_DELAY_MS);       // ·ÀÖ¹·¢ËÍÌ«¿ì£¬½ÓÊÕÆ÷·´Ó¦²»¹ıÀ´
+        process_uart6_data(&robot_state);     // À¶ÑÀÃüÁî´¦Àí
+        process_usart2_data(&robot_state);    // ÓïÒôÃüÁî´¦Àí
     }
 }
