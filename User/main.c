@@ -89,6 +89,10 @@ enum {
     CMD_BT_SPEED_LOW = 21,
     CMD_BT_SPEED_MEDIUM = 22,
     CMD_BT_SPEED_HIGH = 23,
+    CMD_BT_LEFT = 31,
+    CMD_BT_RIGHT = 32,
+    CMD_BT_FORWARD = 33,
+    CMD_BT_BACKWARD = 34,
     CMD_SERVO_LEFT_EYE = 24,
     CMD_SERVO_RIGHT_EYE = 25,
     CMD_SERVO_HEAD = 26,
@@ -327,6 +331,18 @@ static void handle_uart6_command(uint8_t cmd, robot_state_t *state)
     }
 
     switch (cmd) {
+        case CMD_BT_FORWARD:
+            handle_drive_command(CMD_FORWARD, state->speed);
+            break;
+        case CMD_BT_BACKWARD:
+            handle_drive_command(CMD_BACKWARD, state->speed);
+            break;
+        case CMD_BT_RIGHT:
+            handle_drive_command(CMD_RIGHT, state->speed);
+            break;
+        case CMD_BT_LEFT:
+            handle_drive_command(CMD_LEFT, state->speed);
+            break;
         case CMD_FORWARD:
         case CMD_BACKWARD:
         case CMD_RIGHT:
@@ -386,36 +402,21 @@ static void handle_usart2_command(uint8_t cmd, robot_state_t *state)
         case CMD_BACKWARD:
         case CMD_RIGHT:
         case CMD_LEFT:
-        case CMD_STOP_HEART:
-        case CMD_STOP_WALL_E:
             handle_drive_command(cmd, state->speed);
             break;
-        case CMD_BUZZER_TOGGLE:
-            BUZZER_ON;
+        case CMD_STOP_HEART:
+        case CMD_STOP_WALL_E:
+            handle_drive_command(CMD_STOP_WALL_E, state->speed);
             break;
         case CMD_LEFT_EYE_TOGGLE:
-            EYE_L_ON;
-            break;
         case CMD_RIGHT_EYE_TOGGLE:
+            EYE_L_ON;
             EYE_R_ON;
             break;
-        case CMD_BUZZER_OFF:
-            BUZZER_OFF;
-            break;
         case CMD_LEFT_EYE_OFF:
-            EYE_L_OFF;
-            break;
         case CMD_RIGHT_EYE_OFF:
+            EYE_L_OFF;
             EYE_R_OFF;
-            break;
-        case CMD_VOICE_SPEED_LOW:
-            state->speed = ROBOT_DEFAULT_SPEED;
-            break;
-        case CMD_VOICE_SPEED_MEDIUM:
-            state->speed = ROBOT_MEDIUM_SPEED;
-            break;
-        case CMD_VOICE_SPEED_HIGH:
-            state->speed = ROBOT_HIGH_SPEED;
             break;
         default:
             break;
