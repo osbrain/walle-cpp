@@ -185,7 +185,7 @@ static uint8_t parse_uart_command(const uint8_t *buf, uint16_t len, uint8_t *cmd
 
     while ((index < len) &&
            ((buf[index] == ' ') || (buf[index] == '\r') ||
-            (buf[index] == '\n') || (buf[index] == '\t'))) {
+            (buf[index] == '\n'))) {
         index++;
     }
 
@@ -210,7 +210,7 @@ static uint8_t parse_uart_command(const uint8_t *buf, uint16_t len, uint8_t *cmd
 
     while (index < len) {
         if ((buf[index] != ' ') && (buf[index] != '\r') &&
-            (buf[index] != '\n') && (buf[index] != '\t')) {
+            (buf[index] != '\n')) {
             return 0;
         }
         index++;
