@@ -54,6 +54,53 @@ extern uint8_t g_recv_complete_flag_uart6;                  // ½ÓÊÕÊı¾İÍê³É±êÖ¾Î
 
 uint16_t speed = 65;
 
+static uint8_t parse_uart_command(const uint8_t *buf, uint16_t len, uint8_t *cmd)
+{
+    uint16_t index = 0;
+    uint16_t value = 0;
+    uint8_t has_digit = 0;
+
+    if ((buf == NULL) || (cmd == NULL) || (len == 0)) {
+        return 0;
+    }
+
+    while ((index < len) &&
+           ((buf[index] == ' ') || (buf[index] == '\r') ||
+            (buf[index] == '\n') || (buf[index] == '\t'))) {
+        index++;
+    }
+
+    if (index >= len) {
+        return 0;
+    }
+
+    if ((buf[index] < '0') || (buf[index] > '9')) {
+        *cmd = buf[index];
+        return 1;
+    }
+
+    while ((index < len) && (buf[index] >= '0') && (buf[index] <= '9')) {
+        value = (uint16_t)(value * 10 + (buf[index] - '0'));
+        has_digit = 1;
+        index++;
+    }
+
+    if ((has_digit == 0) || (value > 255)) {
+        return 0;
+    }
+
+    while (index < len) {
+        if ((buf[index] != ' ') && (buf[index] != '\r') &&
+            (buf[index] != '\n') && (buf[index] != '\t')) {
+            return 0;
+        }
+        index++;
+    }
+
+    *cmd = (uint8_t)value;
+    return 1;
+}
+
 /************************************************
 º¯ÊıÃû³Æ £º main
 ¹¦    ÄÜ £º Ö÷º¯Êı
@@ -63,6 +110,7 @@ uint16_t speed = 65;
 int main(void)
 {
     uint8_t i = 0;
+    uint8_t uart6_cmd = 0;
 
     nvic_priority_group_set(NVIC_PRIGROUP_PRE2_SUB2);
     systick_config();                        // µÎ´ğ¶¨Ê±Æ÷³õÊ¼»¯
@@ -115,74 +163,76 @@ int main(void)
             printf("g_recv_length:%d ", g_recv_length_uart6); // ´òÓ¡½ÓÊÕµÄÊı¾İ³¤¶È
             printf("g_recv_buff:%s\r\n", g_recv_buff_uart6); // ´òÓ¡½ÓÊÕµÄÊı¾İ
 
-            switch (g_recv_buff_uart6[0]) {
-                case 1:
-                    motor_forward(speed);
-                    LCD_Clear(WHITE);
-                    LCD_ShowPicture(53, 0, 186, 240, shang);
-                    break;
-                case 2:
-                    motor_backward(speed);
-                    LCD_Clear(WHITE);
-                    LCD_ShowPicture(53, 0, 187, 240, xia);
-                    break;
-                case 3:
-                    motor_rightward(speed);
-                    LCD_Clear(WHITE);
-                    LCD_ShowPicture(0, 53, 240, 187, you);
-                    break;
-                case 4:
-                    motor_leftward(speed);
-                    LCD_Clear(WHITE);
-                    LCD_ShowPicture(0, 53, 240, 187, zuo);
-                    break;
-                case 5:
-                    motor_stop(0);
-                    LCD_Clear(WHITE);
-                    LCD_ShowPicture(0, 0, 240, 240, heart);
-                    break;
-                case 6:
-                    motor_stop(1);
-                    LCD_Clear(WHITE);
-                    LCD_ShowPicture(0, 0, 240, 240, WALL_E);
-                    break;
-                case 7:
-                    switch_buzzer_status();
-                    break;
-                case 8:
-                    switch_eye_left_status();
-                    break;
-                case 9:
-                    switch_eye_right_status();
-                    break;
-                case 10:
-                    BUZZER_OFF;
-                    break;
-                case 11:
-                    EYE_L_OFF;
-                    break;
-                case 12:
-                    EYE_R_OFF;
-                    break;
-                case 21:
-                    speed = 65;
-                    break;
-                case 22:
-                    speed = 80;
-                    break;
-                case 23:
-                    speed = 100;
-                    break;
-                case 24:
-                    setAngle(0, i);
-                    i = (i + 1) % 180;      // ¶æ»ú²âÊÔ
-                    break;
-                case 25:
-                    setAngle(1, i);
-                    i = (i + 1) % 180;      // ¶æ»ú²âÊÔ
-                    break;
-                default:
-                    break;
+            if (parse_uart_command(g_recv_buff_uart6, g_recv_length_uart6, &uart6_cmd)) {
+                switch (uart6_cmd) {
+                    case 1:
+                        motor_forward(speed);
+                        LCD_Clear(WHITE);
+                        LCD_ShowPicture(53, 0, 186, 240, shang);
+                        break;
+                    case 2:
+                        motor_backward(speed);
+                        LCD_Clear(WHITE);
+                        LCD_ShowPicture(53, 0, 187, 240, xia);
+                        break;
+                    case 3:
+                        motor_rightward(speed);
+                        LCD_Clear(WHITE);
+                        LCD_ShowPicture(0, 53, 240, 187, you);
+                        break;
+                    case 4:
+                        motor_leftward(speed);
+                        LCD_Clear(WHITE);
+                        LCD_ShowPicture(0, 53, 240, 187, zuo);
+                        break;
+                    case 5:
+                        motor_stop(0);
+                        LCD_Clear(WHITE);
+                        LCD_ShowPicture(0, 0, 240, 240, heart);
+                        break;
+                    case 6:
+                        motor_stop(1);
+                        LCD_Clear(WHITE);
+                        LCD_ShowPicture(0, 0, 240, 240, WALL_E);
+                        break;
+                    case 7:
+                        switch_buzzer_status();
+                        break;
+                    case 8:
+                        switch_eye_left_status();
+                        break;
+                    case 9:
+                        switch_eye_right_status();
+                        break;
+                    case 10:
+                        BUZZER_OFF;
+                        break;
+                    case 11:
+                        EYE_L_OFF;
+                        break;
+                    case 12:
+                        EYE_R_OFF;
+                        break;
+                    case 21:
+                        speed = 65;
+                        break;
+                    case 22:
+                        speed = 80;
+                        break;
+                    case 23:
+                        speed = 100;
+                        break;
+                    case 24:
+                        setAngle(0, i);
+                        i = (i + 1) % 180;      // ¶æ»ú²âÊÔ
+                        break;
+                    case 25:
+                        setAngle(1, i);
+                        i = (i + 1) % 180;      // ¶æ»ú²âÊÔ
+                        break;
+                    default:
+                        break;
+                }
             }
 
             memset(g_recv_buff_uart6, 0, g_recv_length_uart6); // Çå¿ÕÊı×é

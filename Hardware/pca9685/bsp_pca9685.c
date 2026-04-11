@@ -277,6 +277,9 @@ void PCA9685_setPWM(uint8_t num,uint32_t on,uint32_t off)
 	Send_Byte(PCA_Addr);
 	I2C_WaitAck();
 	
+	Send_Byte(LED0_ON_L+4*num);
+	I2C_WaitAck();
+	
 	Send_Byte(on&0xFF);
 	I2C_WaitAck();
 	
@@ -287,9 +290,6 @@ void PCA9685_setPWM(uint8_t num,uint32_t on,uint32_t off)
 	I2C_WaitAck();
 	
 	Send_Byte(off>>8);
-	I2C_WaitAck();
-	
-	Send_Byte(LED0_ON_L+4*num);
 	I2C_WaitAck();
 
 	
