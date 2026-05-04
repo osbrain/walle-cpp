@@ -1,5 +1,8 @@
 #include "bsp_motor.h"
 
+#define MOTOR_MIN_RUN_SPEED     90U
+#define MOTOR_TURN_INNER_RATIO  75U
+
 static void motor_L_pwm_off(void)
 {
 	timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_0,0);
@@ -20,7 +23,7 @@ static void motor_pwm_off(void)
 
 static uint16_t motor_turn_inner_speed(uint16_t speed)
 {
-	uint16_t inner_speed = (uint16_t)(speed / 2U);
+	uint16_t inner_speed = (uint16_t)((speed * MOTOR_TURN_INNER_RATIO) / 100U);
 
 	if ((speed > 0U) && (inner_speed == 0U)) {
 		inner_speed = 1U;
@@ -29,14 +32,23 @@ static uint16_t motor_turn_inner_speed(uint16_t speed)
 	return inner_speed;
 }
 
+static uint16_t motor_effective_speed(uint16_t speed)
+{
+	if ((speed > 0U) && (speed < MOTOR_MIN_RUN_SPEED)) {
+		return MOTOR_MIN_RUN_SPEED;
+	}
+
+	return speed;
+}
+
 static void motor_left_set(int16_t speed)
 {
 	if (speed > 0) {
 		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_0,0);
-		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_1,(uint16_t)speed);
+		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_1,motor_effective_speed((uint16_t)speed));
 	} else if (speed < 0) {
 		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_1,0);
-		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_0,(uint16_t)(-speed));
+		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_0,motor_effective_speed((uint16_t)(-speed)));
 	} else {
 		motor_L_pwm_off();
 	}
@@ -46,10 +58,10 @@ static void motor_right_set(int16_t speed)
 {
 	if (speed > 0) {
 		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_2,0);
-		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_3,(uint16_t)speed);
+		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_3,motor_effective_speed((uint16_t)speed));
 	} else if (speed < 0) {
 		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_3,0);
-		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_2,(uint16_t)(-speed));
+		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_2,motor_effective_speed((uint16_t)(-speed)));
 	} else {
 		motor_R_pwm_off();
 	}
