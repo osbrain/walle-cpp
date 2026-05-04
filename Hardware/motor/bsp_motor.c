@@ -29,6 +29,38 @@ static uint16_t motor_turn_inner_speed(uint16_t speed)
 	return inner_speed;
 }
 
+static void motor_left_set(int16_t speed)
+{
+	if (speed > 0) {
+		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_1,0);
+		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_0,(uint16_t)speed);
+	} else if (speed < 0) {
+		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_0,0);
+		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_1,(uint16_t)(-speed));
+	} else {
+		motor_L_pwm_off();
+	}
+}
+
+static void motor_right_set(int16_t speed)
+{
+	if (speed > 0) {
+		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_3,0);
+		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_2,(uint16_t)speed);
+	} else if (speed < 0) {
+		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_2,0);
+		timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_3,(uint16_t)(-speed));
+	} else {
+		motor_R_pwm_off();
+	}
+}
+
+static void motor_drive(int16_t left_speed, int16_t right_speed)
+{
+	motor_left_set(left_speed);
+	motor_right_set(right_speed);
+}
+
 
 /************************************************
 函数名称 ： motor_gpio_config
@@ -77,26 +109,24 @@ void motor_gpio_config(void)
 }
 /************************************************
 函数名称 ： motor_L_front
-功    能 ： 左轮正转
+功    能 ： 左轮按前进方向转动
 参    数 ： speed
 返 回 值 ： 无
 *************************************************/
 void motor_L_front(uint16_t speed)
 {
-	timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_1,0);
-	timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_0,speed); // 左轮前进
+	motor_left_set((int16_t)speed);
 }
 
 /************************************************
 函数名称 ： motor_L_back
-功    能 ： 左轮反转
+功    能 ： 左轮按后退方向转动
 参    数 ： speed
 返 回 值 ： 无
 *************************************************/
 void motor_L_back(uint16_t speed)
 {
-	timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_0,0);
-	timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_1,speed); // 左轮后退
+	motor_left_set(-(int16_t)speed);
 }
 
 /************************************************
@@ -112,26 +142,24 @@ void motor_L_stop(uint16_t stopMode)
 }
 /************************************************
 函数名称 ： motor_R_front
-功    能 ： 右轮正转
+功    能 ： 右轮按前进方向转动
 参    数 ： speed
 返 回 值 ： 无
 *************************************************/
 void motor_R_front(uint16_t speed)
 {
-	timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_3,0);
-	timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_2,speed); // 右轮前进
+	motor_right_set((int16_t)speed);
 }
 
 /************************************************
 函数名称 ： motor_R_back
-功    能 ： 右轮反转
+功    能 ： 右轮按后退方向转动
 参    数 ： speed
 返 回 值 ： 无
 *************************************************/
 void motor_R_back(uint16_t speed)
 {
-	timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_2,0);
-	timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_3,speed); // 右轮后退
+	motor_right_set(-(int16_t)speed);
 }
 
 /************************************************
@@ -148,26 +176,24 @@ void motor_R_stop(uint16_t stopMode)
 
 /************************************************
 函数名称 ： motor_forward
-功    能 ： 电机前进
+功    能 ： 两个电机按前进方向同速转动
 参    数 ： speed 速度
 返 回 值 ： 无
 *************************************************/
 void motor_forward(uint16_t speed)	// 电机前进
 {
-		motor_L_front(speed);
-		motor_R_front(speed);
+	motor_drive((int16_t)speed, (int16_t)speed);
 }
 
 /************************************************
 函数名称 ： motor_backward
-功    能 ： 电机后退
+功    能 ： 两个电机按后退方向同速转动
 参    数 ： speed 速度
 返 回 值 ： 无
 *************************************************/
 void motor_backward(uint16_t speed)	// 电机后退
 {
-		motor_L_back(speed);
-		motor_R_back(speed);
+	motor_drive(-(int16_t)speed, -(int16_t)speed);
 }
 
 /************************************************
@@ -178,8 +204,7 @@ void motor_backward(uint16_t speed)	// 电机后退
 *************************************************/
 void motor_rightward(uint16_t speed)	// 电机右转
 {
-		motor_L_front(speed);
-		motor_R_front(motor_turn_inner_speed(speed));
+	motor_drive((int16_t)speed, (int16_t)motor_turn_inner_speed(speed));
 }
 
 /************************************************
@@ -190,8 +215,7 @@ void motor_rightward(uint16_t speed)	// 电机右转
 *************************************************/
 void motor_leftward(uint16_t speed)// 电机左转
 {
-		motor_L_front(motor_turn_inner_speed(speed));
-		motor_R_front(speed);
+	motor_drive((int16_t)motor_turn_inner_speed(speed), (int16_t)speed);
 }
 
 /************************************************
