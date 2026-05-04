@@ -7,25 +7,25 @@
 #include "sys.h"
 #include "bsp_pwm.h"
 
-/* 左电机方向A输入：IN1_A --> PA0 / TIMER1_CH0 */
+/* 左电机方向B输入：IN1_A --> PA0 / TIMER1_CH0 */
 #define RCU_IN1_A  		RCU_GPIOA   	// GPIOA的时钟
 #define PORT_IN1_A 		GPIOA			// GPIOA的端口
 #define PIN_IN1_A 		GPIO_PIN_0  	// GPIOA的引脚
 #define TIMER1_CH0  	GPIO_AF_1		// PWM引脚复用
 #define L_FRONT 		PAout(0)
-/* 左电机方向B输入：IN2_A --> PA1 / TIMER1_CH1 */
+/* 左电机方向A输入：IN2_A --> PA1 / TIMER1_CH1 */
 #define RCU_IN2_A  		RCU_GPIOA   	// GPIOA的时钟
 #define PORT_IN2_A 		GPIOA			// GPIOA的端口
 #define PIN_IN2_A 		GPIO_PIN_1  	// GPIOA的引脚
 #define TIMER1_CH1  	GPIO_AF_1		// PWM引脚复用
 #define L_BACK 			PAout(1)
-/* 右电机方向A输入：IN1_B --> PA2 / TIMER1_CH2 */
+/* 右电机方向B输入：IN1_B --> PA2 / TIMER1_CH2 */
 #define RCU_IN1_B  		RCU_GPIOA   	// GPIOA的时钟
 #define PORT_IN1_B 		GPIOA			// GPIOA的端口
 #define PIN_IN1_B 		GPIO_PIN_2  	// GPIOA的引脚
 #define TIMER1_CH2  	GPIO_AF_1		// PWM引脚复用
 #define R_FRONT 		PAout(2)
-/* 右电机方向B输入：IN2_B --> PA3 / TIMER1_CH3 */
+/* 右电机方向A输入：IN2_B --> PA3 / TIMER1_CH3 */
 #define RCU_IN2_B  		RCU_GPIOA   	// GPIOA的时钟
 #define PORT_IN2_B 		GPIOA			// GPIOA的端口
 #define PIN_IN2_B 		GPIO_PIN_3  	// GPIOA的引脚
