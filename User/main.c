@@ -761,7 +761,7 @@ static void init_board(void)
     buzzer_gpio_config();                     // 蜂鸣器初始化
     eye_gpio_config();                        // 眼灯初始化
     motor_gpio_config();                      // 电机初始化
-    motor_stop(1);                            // 上电默认停止
+    motor_stop(0);                            // 上电默认熄火停止，避免驱动板高高刹车逻辑误动作
     PCA9685_Init(50, SERVO_HOME_ANGLE);       // PCA9685--16路舵机初始化  频率50Hz -- 中位90度
 
     PS2_SetInit();                            // PS2手柄初始化
