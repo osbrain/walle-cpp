@@ -17,6 +17,14 @@
 
 void eye_gpio_config(void);
 
+void eye_left_on(void);
+
+void eye_left_off(void);
+
+void eye_right_on(void);
+
+void eye_right_off(void);
+
 void switch_eye_left_status();
 
 void switch_eye_right_status();

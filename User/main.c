@@ -90,14 +90,16 @@ enum {
     CMD_STOP_HEART = 5,           // 停止并显示爱心图。
     CMD_STOP_WALL_E = 6,          // 停止并显示默认瓦力图。
     CMD_BUZZER_TOGGLE = 7,        // 切换蜂鸣器状态。
-    CMD_LEFT_EYE_TOGGLE = 8,      // 切换左眼灯状态。
-    CMD_RIGHT_EYE_TOGGLE = 9,     // 切换右眼灯状态。
+    CMD_LEFT_EYE_ON = 8,          // 打开左眼灯。
+    CMD_RIGHT_EYE_ON = 9,         // 打开右眼灯。
     CMD_SPEED_RESET = 10,         // 速度复位。
-    CMD_SPEED_MINUS_10 = 11,      // 速度降低10。
-    CMD_SPEED_MINUS_5 = 12,       // 速度降低5。
+    CMD_LEFT_EYE_OFF = 11,        // 关闭左眼灯。
+    CMD_RIGHT_EYE_OFF = 12,       // 关闭右眼灯。
     CMD_SPEED_PLUS_5 = 13,        // 速度增加5。
     CMD_SPEED_PLUS_10 = 14,       // 速度增加10。
     CMD_BRAKE_STOP = 15,          // 刹车停止。
+    CMD_SPEED_MINUS_10 = 16,      // 速度降低10。
+    CMD_SPEED_MINUS_5 = 17,       // 速度降低5。
     CMD_BT_SPEED_LOW = 21,        // 蓝牙低速。
     CMD_BT_SPEED_MEDIUM = 22,     // 蓝牙中速。
     CMD_BT_SPEED_HIGH = 23,       // 蓝牙高速。
@@ -554,14 +556,20 @@ static void handle_uart6_command(uint8_t cmd, robot_state_t *state)
         case CMD_BUZZER_TOGGLE:
             switch_buzzer_status();
             break;
-        case CMD_LEFT_EYE_TOGGLE:
-            switch_eye_left_status();
+        case CMD_LEFT_EYE_ON:
+            eye_left_on();
             break;
-        case CMD_RIGHT_EYE_TOGGLE:
-            switch_eye_right_status();
+        case CMD_RIGHT_EYE_ON:
+            eye_right_on();
             break;
         case CMD_SPEED_RESET:
             set_robot_speed(state, ROBOT_DEFAULT_SPEED);
+            break;
+        case CMD_LEFT_EYE_OFF:
+            eye_left_off();
+            break;
+        case CMD_RIGHT_EYE_OFF:
+            eye_right_off();
             break;
         case CMD_SPEED_MINUS_10:
             adjust_robot_speed(state, -10);
@@ -620,14 +628,20 @@ static void handle_usart2_command(uint8_t cmd, robot_state_t *state)
         case CMD_BUZZER_TOGGLE:
             switch_buzzer_status();
             break;
-        case CMD_LEFT_EYE_TOGGLE:      // 语音指令8：切换左眼灯。
-            switch_eye_left_status();
+        case CMD_LEFT_EYE_ON:          // 语音指令8：打开左眼灯。
+            eye_left_on();
             break;
-        case CMD_RIGHT_EYE_TOGGLE:     // 语音指令9：切换右眼灯。
-            switch_eye_right_status();
+        case CMD_RIGHT_EYE_ON:         // 语音指令9：打开右眼灯。
+            eye_right_on();
             break;
         case CMD_SPEED_RESET:
             set_robot_speed(state, ROBOT_DEFAULT_SPEED);
+            break;
+        case CMD_LEFT_EYE_OFF:
+            eye_left_off();
+            break;
+        case CMD_RIGHT_EYE_OFF:
+            eye_right_off();
             break;
         case CMD_SPEED_MINUS_10:
             adjust_robot_speed(state, -10);
