@@ -522,14 +522,14 @@ static void handle_motor_test_command(uint8_t cmd, robot_state_t *state)
 
     if (cmd == CMD_MOTOR_TEST_PA2_PA3_LOW) {
         state->motion = MOTION_DEBUG;
-        motor_debug_right_pa2_pwm_pa3_level(0U, 50U);
+        motor_debug_right_pa2_pwm_pa3_level(0U, ROBOT_DEFAULT_SPEED);
         printf("motor test PA2 PWM, PA3 low\r\n");
         return;
     }
 
     if (cmd == CMD_MOTOR_TEST_PA2_PA3_HIGH) {
         state->motion = MOTION_DEBUG;
-        motor_debug_right_pa2_pwm_pa3_level(1U, 50U);
+        motor_debug_right_pa2_pwm_pa3_level(1U, ROBOT_DEFAULT_SPEED);
         printf("motor test PA2 PWM, PA3 high\r\n");
         return;
     }

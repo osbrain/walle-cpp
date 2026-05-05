@@ -324,6 +324,7 @@ void motor_debug_right_pa2_pwm_pa3_level(uint8_t pa3_high, uint16_t speed)
 {
 	motor_pwm_off();
 	motor_all_inputs_low();
+	speed = motor_effective_speed(speed);
 
 	gpio_mode_set(PORT_IN2_B,GPIO_MODE_OUTPUT,GPIO_PUPD_NONE,PIN_IN2_B);
 	R_BACK = (pa3_high != 0U) ? 1 : 0;
