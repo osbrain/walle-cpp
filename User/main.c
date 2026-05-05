@@ -245,11 +245,8 @@ static uint8_t parse_uart_command(const uint8_t *buf, uint16_t len, uint8_t *cmd
     }
 
     if (len == 1U) {
-        if ((buf[0] >= '0') && (buf[0] <= '9')) {
-            *cmd = (uint8_t)(buf[0] - '0');
-        } else {
-            *cmd = buf[0];
-        }
+        // App发送的是原始单字节命令，例如51会以0x33发送，不能按ASCII字符'3'解析。
+        *cmd = buf[0];
         return 1;
     }
 
