@@ -13,6 +13,20 @@
 #include "systick.h"
 #include <math.h>
 
+#define SERVO_PWM_BASE_COUNT              158U
+#define SERVO_PWM_COUNT_PER_10_DEGREES     22U
+#define SERVO_MAX_ANGLE                   180U
+
+static uint32_t PCA9685_ServoAngleToOff(uint8_t angle)
+{
+	if(angle > SERVO_MAX_ANGLE)
+	{
+		angle = SERVO_MAX_ANGLE;
+	}
+
+	return SERVO_PWM_BASE_COUNT + (((uint32_t)angle * SERVO_PWM_COUNT_PER_10_DEGREES + 5U) / 10U);
+}
+
 /******************************************************************
  * 函 数 名 称：PCA9685_GPIO_Init
  * 函 数 说 明：PCA9685的引脚初始化
@@ -424,7 +438,7 @@ void setAngle(uint8_t num,uint8_t angle)
 {
 	uint32_t off = 0;
 	
-	off = (uint32_t)(158+angle*2.2);
+	off = PCA9685_ServoAngleToOff(angle);
 	
 	PCA9685_setPWM(num,0,off);
 }
@@ -442,7 +456,7 @@ void setAngle2(uint8_t num1,uint8_t num2,uint8_t angle)
 {
 	uint32_t off = 0;
 	
-	off = (uint32_t)(158+angle*2.2);
+	off = PCA9685_ServoAngleToOff(angle);
 	
 	PCA9685_setPWM2(num1,num2,0,off);
 }
@@ -469,7 +483,7 @@ void PCA9685_Init(float hz,uint8_t angle)
 //	下面是setPWMFreq函数的内容，主要是根据频率计算PRE_SCALE的值。
 	PCA9685_setFreq(hz);
 	//计算角度
-	off = (uint32_t)(145+angle*2.4);
+	off = PCA9685_ServoAngleToOff(angle);
 	
 	//控制16个舵机输出off角度
 	PCA9685_setPWM(0,0,off);
