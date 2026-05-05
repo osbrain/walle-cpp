@@ -119,7 +119,9 @@ enum {
     CMD_MOTOR_TEST_CH1 = 42,      // 调试：单独输出PA1/TIMER1_CH1。
     CMD_MOTOR_TEST_CH2 = 43,      // 调试：单独输出PA2/TIMER1_CH2。
     CMD_MOTOR_TEST_CH3 = 44,      // 调试：单独输出PA3/TIMER1_CH3。
-    CMD_MOTOR_TEST_STOP = 45      // 调试：停止所有电机通道。
+    CMD_MOTOR_TEST_STOP = 45,     // 调试：停止所有电机通道。
+    CMD_MOTOR_TEST_PA2_PA3_LOW = 46,  // 调试：PA2输出PWM，PA3拉低。
+    CMD_MOTOR_TEST_PA2_PA3_HIGH = 47  // 调试：PA2输出PWM，PA3拉高。
 };
 
 typedef enum {
@@ -518,6 +520,20 @@ static void handle_motor_test_command(uint8_t cmd, robot_state_t *state)
         return;
     }
 
+    if (cmd == CMD_MOTOR_TEST_PA2_PA3_LOW) {
+        state->motion = MOTION_DEBUG;
+        motor_debug_right_pa2_pwm_pa3_level(0U, 50U);
+        printf("motor test PA2 PWM, PA3 low\r\n");
+        return;
+    }
+
+    if (cmd == CMD_MOTOR_TEST_PA2_PA3_HIGH) {
+        state->motion = MOTION_DEBUG;
+        motor_debug_right_pa2_pwm_pa3_level(1U, 50U);
+        printf("motor test PA2 PWM, PA3 high\r\n");
+        return;
+    }
+
     switch (cmd) {
         case CMD_MOTOR_TEST_CH0:
             channel = 0U;
@@ -652,6 +668,8 @@ static void handle_uart6_command(uint8_t cmd, robot_state_t *state)
         case CMD_MOTOR_TEST_CH2:
         case CMD_MOTOR_TEST_CH3:
         case CMD_MOTOR_TEST_STOP:
+        case CMD_MOTOR_TEST_PA2_PA3_LOW:
+        case CMD_MOTOR_TEST_PA2_PA3_HIGH:
             handle_motor_test_command(cmd, state);
             break;
         default:

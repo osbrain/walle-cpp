@@ -52,5 +52,6 @@ void motor_leftward(uint16_t speed); // 左慢右快差速左转
 void motor_rightward(uint16_t speed);// 左快右慢差速右转
 void motor_stop(uint16_t stopMode);	 // 四路PWM清零停止
 void motor_debug_channel(uint8_t channel, uint16_t speed); // 单独输出PA0~PA3一路PWM用于实测排查
+void motor_debug_right_pa2_pwm_pa3_level(uint8_t pa3_high, uint16_t speed); // PA2输出PWM并切换PA3电平
 
 #endif  /* _BSP_MOTOR_H */

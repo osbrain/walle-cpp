@@ -313,3 +313,22 @@ void motor_debug_channel(uint8_t channel, uint16_t speed)
 			break;
 	}
 }
+
+/************************************************
+函数名称 ： motor_debug_right_pa2_pwm_pa3_level
+功    能 ： 固定PA2输出PWM，同时切换PA3电平，判断PA3是否参与右电机方向控制
+参    数 ： pa3_high=0时PA3拉低；pa3_high非0时PA3拉高；speed=PWM占空比
+返 回 值 ： 无
+*************************************************/
+void motor_debug_right_pa2_pwm_pa3_level(uint8_t pa3_high, uint16_t speed)
+{
+	motor_pwm_off();
+	motor_all_inputs_low();
+
+	gpio_mode_set(PORT_IN2_B,GPIO_MODE_OUTPUT,GPIO_PUPD_NONE,PIN_IN2_B);
+	R_BACK = (pa3_high != 0U) ? 1 : 0;
+
+	gpio_mode_set(PORT_IN1_B,GPIO_MODE_AF,GPIO_PUPD_NONE,PIN_IN1_B);
+	gpio_af_set(PORT_IN1_B,TIMER1_CH2,PIN_IN1_B);
+	timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_2,speed);
+}
