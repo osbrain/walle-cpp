@@ -462,6 +462,8 @@ static void handle_drive_command(uint8_t cmd, robot_state_t *state)
     apply_motor_motion(state->motion, state->speed);
 }
 
+static void servo_test_feedback(void);
+
 static void handle_servo_command(uint8_t cmd, robot_state_t *state)
 {
     uint8_t servo_angle = 0;
@@ -469,6 +471,8 @@ static void handle_servo_command(uint8_t cmd, robot_state_t *state)
     if (state == NULL) {
         return;
     }
+
+    servo_test_feedback();
 
     // 舵机命令只改变对应关节；双臂命令会同步左右臂状态。
     switch (cmd) {
