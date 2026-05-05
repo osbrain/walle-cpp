@@ -1,7 +1,8 @@
 #include "bsp_motor.h"
 
 #define MOTOR_MIN_RUN_SPEED     80U
-#define MOTOR_TURN_INNER_RATIO  80U
+#define MOTOR_TURN_INNER_SPEED  80U
+#define MOTOR_TURN_OUTER_SPEED  100U
 
 static void motor_L_pwm_off(void)
 {
@@ -19,17 +20,6 @@ static void motor_pwm_off(void)
 {
 	motor_L_pwm_off();
 	motor_R_pwm_off();
-}
-
-static uint16_t motor_turn_inner_speed(uint16_t speed)
-{
-	uint16_t inner_speed = (uint16_t)((speed * MOTOR_TURN_INNER_RATIO) / 100U);
-
-	if ((speed > 0U) && (inner_speed == 0U)) {
-		inner_speed = 1U;
-	}
-
-	return inner_speed;
 }
 
 static uint16_t motor_effective_speed(uint16_t speed)
@@ -216,7 +206,8 @@ void motor_backward(uint16_t speed)	// 电机后退
 *************************************************/
 void motor_rightward(uint16_t speed)	// 电机右转
 {
-	motor_drive((int16_t)speed, (int16_t)motor_turn_inner_speed(speed));
+	(void)speed;
+	motor_drive((int16_t)MOTOR_TURN_OUTER_SPEED, (int16_t)MOTOR_TURN_INNER_SPEED);
 }
 
 /************************************************
@@ -227,7 +218,8 @@ void motor_rightward(uint16_t speed)	// 电机右转
 *************************************************/
 void motor_leftward(uint16_t speed)// 电机左转
 {
-	motor_drive((int16_t)motor_turn_inner_speed(speed), (int16_t)speed);
+	(void)speed;
+	motor_drive((int16_t)MOTOR_TURN_INNER_SPEED, (int16_t)MOTOR_TURN_OUTER_SPEED);
 }
 
 /************************************************
