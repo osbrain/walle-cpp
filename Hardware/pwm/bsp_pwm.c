@@ -31,6 +31,7 @@ void pwm1_config(uint16_t pre,uint16_t per)
 	timer_init(BSP_PWM1_TIMER,&timere_initpara);			   	 // 初始化定时器
 	
 	/* 配置输出结构体 */
+	timer_channel_output_struct_para_init(&timer_ocintpara);
 	timer_ocintpara.ocpolarity = TIMER_OC_POLARITY_HIGH;    // 有效电平的极性
 	timer_ocintpara.outputstate = TIMER_CCX_ENABLE;					// 配置比较输出模式状态 也就是使能PWM输出到端口
 	/* 配置定时器输出功能 */

@@ -6,6 +6,7 @@
   * 控制说明: 蓝牙控制支持前进、后退、左转、右转、停止/刹车、调速、
   *           蜂鸣器、左右眼灯，以及左眼、右眼、头部、双臂、左右手舵机。
   *           语音控制支持常用运动、停止/刹车、调速、蜂鸣器和左右眼灯。
+  *           蓝牙临时诊断指令41~44用于单独测试PA0~PA3电机PWM，45用于停止。
   ******************************************************************************
   * 注意事项:
 *********************************************************************************/
@@ -113,7 +114,12 @@ enum {
     CMD_SERVO_HEAD = 26,          // 头部舵机摆动。
     CMD_SERVO_BOTH_ARMS = 27,     // 双臂舵机同步摆动。
     CMD_SERVO_LEFT_ARM = 28,      // 左臂舵机摆动。
-    CMD_SERVO_RIGHT_ARM = 29      // 右臂舵机摆动。
+    CMD_SERVO_RIGHT_ARM = 29,     // 右臂舵机摆动。
+    CMD_MOTOR_TEST_CH0 = 41,      // 调试：单独输出PA0/TIMER1_CH0。
+    CMD_MOTOR_TEST_CH1 = 42,      // 调试：单独输出PA1/TIMER1_CH1。
+    CMD_MOTOR_TEST_CH2 = 43,      // 调试：单独输出PA2/TIMER1_CH2。
+    CMD_MOTOR_TEST_CH3 = 44,      // 调试：单独输出PA3/TIMER1_CH3。
+    CMD_MOTOR_TEST_STOP = 45      // 调试：停止所有电机通道。
 };
 
 typedef enum {
@@ -121,7 +127,8 @@ typedef enum {
     MOTION_FORWARD,
     MOTION_BACKWARD,
     MOTION_RIGHT,
-    MOTION_LEFT
+    MOTION_LEFT,
+    MOTION_DEBUG
 } motion_state_t;
 
 typedef struct {
@@ -496,6 +503,44 @@ static void handle_servo_command(uint8_t cmd, robot_state_t *state)
     }
 }
 
+static void handle_motor_test_command(uint8_t cmd, robot_state_t *state)
+{
+    uint8_t channel = 0U;
+
+    if (state == NULL) {
+        return;
+    }
+
+    state->motion_idle_ms = 0U;
+
+    if (cmd == CMD_MOTOR_TEST_STOP) {
+        stop_robot(state, 0U, CMD_STOP_WALL_E);
+        return;
+    }
+
+    switch (cmd) {
+        case CMD_MOTOR_TEST_CH0:
+            channel = 0U;
+            break;
+        case CMD_MOTOR_TEST_CH1:
+            channel = 1U;
+            break;
+        case CMD_MOTOR_TEST_CH2:
+            channel = 2U;
+            break;
+        case CMD_MOTOR_TEST_CH3:
+            channel = 3U;
+            break;
+        default:
+            return;
+    }
+
+    // 诊断命令不走前进/后退语义，只单独输出一路PWM，用来核对IO和接线。
+    state->motion = MOTION_DEBUG;
+    motor_debug_channel(channel, ROBOT_DEFAULT_SPEED);
+    printf("motor test channel:%d\r\n", channel);
+}
+
 static void reapply_current_motion(robot_state_t *state)
 {
     if ((state == NULL) || (state->motion == MOTION_STOP)) {
@@ -601,6 +646,13 @@ static void handle_uart6_command(uint8_t cmd, robot_state_t *state)
         case CMD_SERVO_LEFT_ARM:
         case CMD_SERVO_RIGHT_ARM:
             handle_servo_command(cmd, state);
+            break;
+        case CMD_MOTOR_TEST_CH0:
+        case CMD_MOTOR_TEST_CH1:
+        case CMD_MOTOR_TEST_CH2:
+        case CMD_MOTOR_TEST_CH3:
+        case CMD_MOTOR_TEST_STOP:
+            handle_motor_test_command(cmd, state);
             break;
         default:
             break;

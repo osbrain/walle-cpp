@@ -22,6 +22,18 @@ static void motor_pwm_off(void)
 	motor_R_pwm_off();
 }
 
+static void motor_all_inputs_low(void)
+{
+	gpio_mode_set(PORT_IN1_A,GPIO_MODE_OUTPUT,GPIO_PUPD_NONE,PIN_IN1_A);
+	L_FRONT=0;
+	gpio_mode_set(PORT_IN2_A,GPIO_MODE_OUTPUT,GPIO_PUPD_NONE,PIN_IN2_A);
+	L_BACK=0;
+	gpio_mode_set(PORT_IN1_B,GPIO_MODE_OUTPUT,GPIO_PUPD_NONE,PIN_IN1_B);
+	R_FRONT=0;
+	gpio_mode_set(PORT_IN2_B,GPIO_MODE_OUTPUT,GPIO_PUPD_NONE,PIN_IN2_B);
+	R_BACK=0;
+}
+
 static uint16_t motor_effective_speed(uint16_t speed)
 {
 	if ((speed > 0U) && (speed < MOTOR_MIN_RUN_SPEED)) {
@@ -257,4 +269,47 @@ void motor_stop(uint16_t stopMode)//电机停止
 	(void)stopMode;
 	motor_L_stop(0);
 	motor_R_stop(0);
+}
+
+/************************************************
+函数名称 ： motor_debug_channel
+功    能 ： 调试单个电机PWM通道，定位IO/接线/驱动输入问题
+参    数 ： channel=0~3，对应PA0/PA1/PA2/PA3；speed=PWM占空比
+返 回 值 ： 无
+*************************************************/
+void motor_debug_channel(uint8_t channel, uint16_t speed)
+{
+	motor_pwm_off();
+	motor_all_inputs_low();
+
+	if (speed == 0U) {
+		return;
+	}
+
+	speed = motor_effective_speed(speed);
+
+	switch (channel) {
+		case 0U:
+			gpio_mode_set(PORT_IN1_A,GPIO_MODE_AF,GPIO_PUPD_NONE,PIN_IN1_A);
+			gpio_af_set(PORT_IN1_A,TIMER1_CH0,PIN_IN1_A);
+			timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_0,speed);
+			break;
+		case 1U:
+			gpio_mode_set(PORT_IN2_A,GPIO_MODE_AF,GPIO_PUPD_NONE,PIN_IN2_A);
+			gpio_af_set(PORT_IN2_A,TIMER1_CH1,PIN_IN2_A);
+			timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_1,speed);
+			break;
+		case 2U:
+			gpio_mode_set(PORT_IN1_B,GPIO_MODE_AF,GPIO_PUPD_NONE,PIN_IN1_B);
+			gpio_af_set(PORT_IN1_B,TIMER1_CH2,PIN_IN1_B);
+			timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_2,speed);
+			break;
+		case 3U:
+			gpio_mode_set(PORT_IN2_B,GPIO_MODE_AF,GPIO_PUPD_NONE,PIN_IN2_B);
+			gpio_af_set(PORT_IN2_B,TIMER1_CH3,PIN_IN2_B);
+			timer_channel_output_pulse_value_config(BSP_PWM1_TIMER,BSP_PWM1_CHANNEL_3,speed);
+			break;
+		default:
+			break;
+	}
 }

@@ -51,5 +51,6 @@ void motor_backward(uint16_t speed); // 两个电机按后退方向同速转动
 void motor_leftward(uint16_t speed); // 左慢右快差速左转
 void motor_rightward(uint16_t speed);// 左快右慢差速右转
 void motor_stop(uint16_t stopMode);	 // 四路PWM清零停止
+void motor_debug_channel(uint8_t channel, uint16_t speed); // 单独输出PA0~PA3一路PWM用于实测排查
 
 #endif  /* _BSP_MOTOR_H */
