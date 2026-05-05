@@ -223,6 +223,18 @@ void PCA9685_Write(uint8_t addr,uint8_t data)
 	
 	IIC_Stop();
 }
+
+uint8_t PCA9685_IsReady(void)
+{
+	uint8_t ack = 0;
+
+	IIC_Start();
+	Send_Byte(PCA_Addr);
+	ack = I2C_WaitAck();
+	IIC_Stop();
+
+	return (ack == 0U) ? 1U : 0U;
+}
  
 /******************************************************************
  * º¯ Êý Ãû ³Æ£ºPCA9685_Read

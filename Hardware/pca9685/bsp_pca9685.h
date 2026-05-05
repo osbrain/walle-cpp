@@ -37,5 +37,6 @@ void setAngle2(uint8_t num1,uint8_t num2,uint8_t angle);
 void PCA9685_setFreq(float freq);
 void PCA9685_setPWM(uint8_t num,uint32_t on,uint32_t off);
 void PCA9685_setPWM2(uint8_t num1,uint8_t num2,uint32_t on,uint32_t off);
+uint8_t PCA9685_IsReady(void);
 
 #endif

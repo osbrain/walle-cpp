@@ -460,6 +460,7 @@ static void handle_drive_command(uint8_t cmd, robot_state_t *state)
 }
 
 static void servo_test_feedback(void);
+static void servo_pca_error_feedback(void);
 
 static void handle_servo_command(uint8_t cmd, robot_state_t *state)
 {
@@ -470,6 +471,10 @@ static void handle_servo_command(uint8_t cmd, robot_state_t *state)
     }
 
     servo_test_feedback();
+    if (!PCA9685_IsReady()) {
+        servo_pca_error_feedback();
+        return;
+    }
 
     // 舵机命令只改变对应关节；双臂命令会同步左右臂状态。
     switch (cmd) {
@@ -520,6 +525,29 @@ static void servo_test_feedback(void)
     BUZZER_OFF;
 }
 
+static void servo_pca_error_feedback(void)
+{
+    uint8_t index = 0U;
+
+    for (index = 0U; index < 3U; index++) {
+        delay_1ms(ROBOT_BUZZER_DELAY_MS);
+        BUZZER_ON;
+        delay_1ms(ROBOT_BUZZER_DELAY_MS);
+        BUZZER_OFF;
+    }
+}
+
+static uint8_t servo_test_prepare(void)
+{
+    servo_test_feedback();
+    if (!PCA9685_IsReady()) {
+        servo_pca_error_feedback();
+        return 0U;
+    }
+
+    return 1U;
+}
+
 static void servo_test_write_all(uint8_t angle)
 {
     setAngle(SERVO_LEFT_EYE_CH, angle);
@@ -531,7 +559,10 @@ static void servo_test_write_all(uint8_t angle)
 
 static void servo_test_channel(uint8_t channel)
 {
-    servo_test_feedback();
+    if (!servo_test_prepare()) {
+        return;
+    }
+
     setAngle(channel, SERVO_SAFE_MIN_ANGLE);
     delay_1ms(SERVO_TEST_DELAY_MS);
     setAngle(channel, SERVO_SAFE_MAX_ANGLE);
@@ -541,7 +572,10 @@ static void servo_test_channel(uint8_t channel)
 
 static void servo_test_all(void)
 {
-    servo_test_feedback();
+    if (!servo_test_prepare()) {
+        return;
+    }
+
     servo_test_write_all(SERVO_SAFE_MIN_ANGLE);
     delay_1ms(SERVO_TEST_DELAY_MS);
     servo_test_write_all(SERVO_SAFE_MAX_ANGLE);
