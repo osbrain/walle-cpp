@@ -1,7 +1,7 @@
 #include "bsp_motor.h"
 
-#define MOTOR_MIN_RUN_SPEED     90U
-#define MOTOR_TURN_INNER_RATIO  75U
+#define MOTOR_MIN_RUN_SPEED     80U
+#define MOTOR_TURN_INNER_RATIO  80U
 
 static void motor_L_pwm_off(void)
 {
